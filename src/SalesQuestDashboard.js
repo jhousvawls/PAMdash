@@ -128,13 +128,13 @@ const SalesQuestDashboard = () => {
       const result = await response.json();
       if (result.success) {
         setUploadMessage(`✅ Successfully saved ${result.count} sales warriors to WordPress!`);
-        // Reload data from WordPress
-        loadDataFromWordPress();
+        // Don't reload from WordPress - keep the current data visible
       } else {
-        setUploadMessage('❌ Error saving to WordPress: ' + result.message);
+        setUploadMessage('❌ Error saving to WordPress: ' + result.message + ' (Data still visible locally)');
       }
     } catch (error) {
-      setUploadMessage('❌ Error connecting to WordPress: ' + error.message);
+      setUploadMessage('❌ Error connecting to WordPress: ' + error.message + ' (Data still visible locally)');
+      console.error('WordPress save error:', error);
     }
   };
 
