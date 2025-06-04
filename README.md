@@ -136,15 +136,20 @@ Download the template from the dashboard for the exact format.
 
 ## 🚀 Deployment
 
-### React App
-- Build: `npm run build`
-- Deploy to any static hosting (Netlify, Vercel, etc.)
-- Or host on WP Engine alongside WordPress
+**📋 See [DEPLOYMENT-GUIDE.md](DEPLOYMENT-GUIDE.md) for complete setup instructions**
 
-### WordPress Plugin
-- Upload to WP Engine WordPress installation
-- Activate and configure settings
-- Ensure REST API is accessible
+### Quick Overview
+1. **Create WordPress site on WP Engine** (you need to set this up)
+2. **Install the plugin** from `wordpress-plugin/sales-dashboard/`
+3. **Deploy React app** - build and upload to WP Engine or external hosting
+4. **Configure API connection** - update React app with your WordPress URL
+
+### What You Need
+- **WP Engine Account** - Create new WordPress installation
+- **Plugin Installation** - Upload and activate the included plugin
+- **React App Deployment** - Build and host the dashboard
+
+The repository includes the plugin files, but you need to create the WordPress environment on WP Engine.
 
 ## 🔒 Security Considerations
 
