@@ -13,7 +13,7 @@ Your WP Engine Sales Performance Dashboard is now fully packaged and committed t
    - Click the "+" icon → "New repository"
 
 2. **Create Repository**:
-   - Repository name: `wp-engine-sales-dashboard`
+   - Repository name: `PAMdash`
    - Description: `Modern sales performance dashboard with WordPress backend integration`
    - Set to Public or Private (your choice)
    - **DO NOT** initialize with README, .gitignore, or license (we already have these)
@@ -21,7 +21,7 @@ Your WP Engine Sales Performance Dashboard is now fully packaged and committed t
 
 3. **Push Your Code**:
    ```bash
-   git remote add origin https://github.com/YOUR-USERNAME/wp-engine-sales-dashboard.git
+   git remote add origin https://github.com/YOUR-USERNAME/PAMdash.git
    git branch -M main
    git push -u origin main
    ```
@@ -29,7 +29,7 @@ Your WP Engine Sales Performance Dashboard is now fully packaged and committed t
 ### Option 2: Using GitHub CLI (if installed)
 
 ```bash
-gh repo create wp-engine-sales-dashboard --public --description "Modern sales performance dashboard with WordPress backend integration"
+gh repo create PAMdash --public --description "Modern sales performance dashboard with WordPress backend integration"
 git push -u origin main
 ```
 
@@ -90,8 +90,8 @@ After pushing to GitHub, team members can:
 
 ```bash
 # Clone repository
-git clone https://github.com/YOUR-USERNAME/wp-engine-sales-dashboard.git
-cd wp-engine-sales-dashboard
+git clone https://github.com/YOUR-USERNAME/PAMdash.git
+cd PAMdash
 
 # Install dependencies
 npm install

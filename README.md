@@ -1,8 +1,8 @@
-# WP Engine Sales Performance Dashboard
+# PAMdash - WP Engine Sales Performance Dashboard
 
 A modern, gamified sales performance dashboard with WordPress backend integration. Built with React and featuring WP Engine's official brand guidelines.
 
-![WP Engine Sales Dashboard](https://img.shields.io/badge/WP%20Engine-Sales%20Dashboard-blue)
+![PAMdash](https://img.shields.io/badge/PAMdash-Sales%20Dashboard-blue)
 ![React](https://img.shields.io/badge/React-18.2.0-blue)
 ![WordPress](https://img.shields.io/badge/WordPress-Plugin-blue)
 
@@ -58,8 +58,8 @@ sales-dashboard/
 
 ### 1. Clone Repository
 ```bash
-git clone https://github.com/your-username/wp-engine-sales-dashboard.git
-cd wp-engine-sales-dashboard
+git clone https://github.com/your-username/PAMdash.git
+cd PAMdash
 ```
 
 ### 2. Install React Dependencies
