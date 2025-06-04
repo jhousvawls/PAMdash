@@ -26,6 +26,12 @@ Your WP Engine Sales Performance Dashboard is now fully packaged and committed t
    git push -u origin main
    ```
 
+   **If you get "remote origin already exists" error:**
+   ```bash
+   git remote set-url origin https://github.com/YOUR-USERNAME/PAMdash.git
+   git push -u origin main
+   ```
+
 ### Option 2: Using GitHub CLI (if installed)
 
 ```bash
