@@ -136,20 +136,20 @@ Download the template from the dashboard for the exact format.
 
 ## 🚀 Deployment
 
-**📋 See [DEPLOYMENT-GUIDE.md](DEPLOYMENT-GUIDE.md) for complete setup instructions**
+**📋 See [PAMDASH-SETUP.md](PAMDASH-SETUP.md) for your specific installation setup**
 
-### Quick Overview
-1. **Create WordPress site on WP Engine** (you need to set this up)
-2. **Install the plugin** from `wordpress-plugin/sales-dashboard/`
-3. **Deploy React app** - build and upload to WP Engine or external hosting
-4. **Configure API connection** - update React app with your WordPress URL
+### Your WordPress Installation
+- **WordPress URL**: https://pamdash.wpenginepowered.com/
+- **WordPress Admin**: https://pamdash.wpenginepowered.com/wp-admin/
+- **API Base URL**: https://pamdash.wpenginepowered.com/wp-json/sales/v1/
 
-### What You Need
-- **WP Engine Account** - Create new WordPress installation
-- **Plugin Installation** - Upload and activate the included plugin
-- **React App Deployment** - Build and host the dashboard
+### Quick Setup Steps
+1. **Install the plugin** - Upload `wordpress-plugin/sales-dashboard/` to your WordPress
+2. **Update React app** - Configure API to use https://pamdash.wpenginepowered.com/wp-json/sales/v1/
+3. **Deploy dashboard** - Build and upload to WP Engine or external hosting
+4. **Test integration** - Verify data persistence works
 
-The repository includes the plugin files, but you need to create the WordPress environment on WP Engine.
+**📋 See also [DEPLOYMENT-GUIDE.md](DEPLOYMENT-GUIDE.md) for general deployment instructions**
 
 ## 🔒 Security Considerations
 
