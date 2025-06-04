@@ -7,6 +7,9 @@ const SalesQuestDashboard = () => {
   const [selectedView, setSelectedView] = useState('leaderboard');
   const [selectedPeriod, setSelectedPeriod] = useState('monthly');
   const [showUploadModal, setShowUploadModal] = useState(false);
+  
+  // WordPress API configuration
+  const WORDPRESS_API_BASE = 'https://pamdash.wpenginepowered.com/wp-json/sales/v1';
 
   // Sample data with your 5 metrics
   const sampleData = [
@@ -76,12 +79,64 @@ const SalesQuestDashboard = () => {
   ];
 
   useEffect(() => {
-    const processedData = sampleData.map(person => ({
-      ...person,
-      ...calculateQuestMetrics(person)
-    }));
-    setSalesData(processedData);
+    // Load data from WordPress on component mount
+    loadDataFromWordPress();
   }, []);
+
+  const loadDataFromWordPress = async () => {
+    try {
+      const response = await fetch(`${WORDPRESS_API_BASE}/data`);
+      const result = await response.json();
+      if (result.success && result.data.length > 0) {
+        // Use WordPress data if available
+        const processedData = result.data.map(person => ({
+          ...person,
+          ...calculateQuestMetrics(person)
+        }));
+        setSalesData(processedData);
+      } else {
+        // Use sample data if no WordPress data exists
+        const processedData = sampleData.map(person => ({
+          ...person,
+          ...calculateQuestMetrics(person)
+        }));
+        setSalesData(processedData);
+      }
+    } catch (error) {
+      console.error('Error loading data from WordPress:', error);
+      // Fallback to sample data
+      const processedData = sampleData.map(person => ({
+        ...person,
+        ...calculateQuestMetrics(person)
+      }));
+      setSalesData(processedData);
+    }
+  };
+
+  const saveToWordPress = async (salesData) => {
+    try {
+      const response = await fetch(`${WORDPRESS_API_BASE}/upload`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          salesData: salesData,
+          title: `Sales Data - ${new Date().toLocaleDateString()}`
+        })
+      });
+      const result = await response.json();
+      if (result.success) {
+        setUploadMessage(`✅ Successfully saved ${result.count} sales warriors to WordPress!`);
+        // Reload data from WordPress
+        loadDataFromWordPress();
+      } else {
+        setUploadMessage('❌ Error saving to WordPress: ' + result.message);
+      }
+    } catch (error) {
+      setUploadMessage('❌ Error connecting to WordPress: ' + error.message);
+    }
+  };
 
   const calculateQuestMetrics = (person) => {
     const quests = [
@@ -217,7 +272,10 @@ const SalesQuestDashboard = () => {
           });
           
           setSalesData(parsedData);
-          setUploadMessage(`✅ Successfully uploaded ${parsedData.length} sales warriors!`);
+          
+          // Save to WordPress
+          saveToWordPress(parsedData);
+          
           setTimeout(() => setUploadMessage(''), 3000);
         } catch (error) {
           setUploadMessage('❌ Error parsing CSV file. Please check format.');
