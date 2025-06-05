@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 
 const SalesQuestDashboard = () => {
   const [salesData, setSalesData] = useState([]);
@@ -9,8 +9,8 @@ const SalesQuestDashboard = () => {
   // WordPress API configuration
   const WORDPRESS_API_BASE = 'https://pamdash.wpenginepowered.com/wp-json/sales/v1';
 
-  // Sample data with percentage-based metrics
-  const sampleData = [
+  // Sample data with percentage-based metrics - memoized to prevent re-creation
+  const sampleData = useMemo(() => [
     {
       id: 1,
       name: "Sarah Johnson",
@@ -56,96 +56,9 @@ const SalesQuestDashboard = () => {
       streak: 15,
       team: "Sales Team"
     }
-  ];
+  ], []);
 
-  useEffect(() => {
-    // Load data from WordPress on component mount
-    loadDataFromWordPress();
-  }, [loadDataFromWordPress]);
-
-  // Save data to localStorage whenever salesData changes
-  useEffect(() => {
-    if (salesData.length > 0) {
-      localStorage.setItem('salesDashboardData', JSON.stringify(salesData));
-    }
-  }, [salesData]);
-
-  const loadDataFromWordPress = useCallback(async () => {
-    // First, check for locally stored data
-    const localData = localStorage.getItem('salesDashboardData');
-    if (localData) {
-      try {
-        const parsedLocalData = JSON.parse(localData);
-        // Check if the data has the new percentage format
-        if (parsedLocalData.length > 0 && parsedLocalData[0].closedWonPercent !== undefined) {
-          setSalesData(parsedLocalData);
-          return; // Use local data and exit early
-        } else {
-          // Clear old format data
-          localStorage.removeItem('salesDashboardData');
-        }
-      } catch (error) {
-        console.error('Error parsing local data:', error);
-        localStorage.removeItem('salesDashboardData'); // Clear corrupted data
-      }
-    }
-
-    // If no local data, try WordPress
-    try {
-      const response = await fetch(`${WORDPRESS_API_BASE}/data`);
-      const result = await response.json();
-      if (result.success && result.data.length > 0) {
-        // Use WordPress data if available
-        const processedData = result.data.map(person => ({
-          ...person,
-          ...calculateQuestMetrics(person)
-        }));
-        setSalesData(processedData);
-      } else {
-        // Use sample data if no WordPress data exists
-        const processedData = sampleData.map(person => ({
-          ...person,
-          ...calculateQuestMetrics(person)
-        }));
-        setSalesData(processedData);
-      }
-    } catch (error) {
-      console.error('Error loading data from WordPress:', error);
-      // Fallback to sample data
-      const processedData = sampleData.map(person => ({
-        ...person,
-        ...calculateQuestMetrics(person)
-      }));
-      setSalesData(processedData);
-    }
-  }, [WORDPRESS_API_BASE, sampleData]);
-
-  const saveToWordPress = async (salesData) => {
-    try {
-      const response = await fetch(`${WORDPRESS_API_BASE}/upload`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          salesData: salesData,
-          title: `Sales Data - ${new Date().toLocaleDateString()}`
-        })
-      });
-      const result = await response.json();
-      if (result.success) {
-        setUploadMessage(`✅ Successfully saved ${result.count} sales warriors to WordPress!`);
-        // Don't reload from WordPress - keep the current data visible
-      } else {
-        setUploadMessage('❌ Error saving to WordPress: ' + result.message + ' (Data still visible locally)');
-      }
-    } catch (error) {
-      setUploadMessage('❌ Error connecting to WordPress: ' + error.message + ' (Data still visible locally)');
-      console.error('WordPress save error:', error);
-    }
-  };
-
-  const calculateQuestMetrics = (person) => {
+  const calculateQuestMetrics = useCallback((person) => {
     const quests = [
       {
         name: "Closed Won",
@@ -231,6 +144,93 @@ const SalesQuestDashboard = () => {
       level,
       completedQuestCount: completedQuests.filter(q => q.status === 'completed').length
     };
+  }, []);
+
+  const loadDataFromWordPress = useCallback(async () => {
+    // First, check for locally stored data
+    const localData = localStorage.getItem('salesDashboardData');
+    if (localData) {
+      try {
+        const parsedLocalData = JSON.parse(localData);
+        // Check if the data has the new percentage format
+        if (parsedLocalData.length > 0 && parsedLocalData[0].closedWonPercent !== undefined) {
+          setSalesData(parsedLocalData);
+          return; // Use local data and exit early
+        } else {
+          // Clear old format data
+          localStorage.removeItem('salesDashboardData');
+        }
+      } catch (error) {
+        console.error('Error parsing local data:', error);
+        localStorage.removeItem('salesDashboardData'); // Clear corrupted data
+      }
+    }
+
+    // If no local data, try WordPress
+    try {
+      const response = await fetch(`${WORDPRESS_API_BASE}/data`);
+      const result = await response.json();
+      if (result.success && result.data.length > 0) {
+        // Use WordPress data if available
+        const processedData = result.data.map(person => ({
+          ...person,
+          ...calculateQuestMetrics(person)
+        }));
+        setSalesData(processedData);
+      } else {
+        // Use sample data if no WordPress data exists
+        const processedData = sampleData.map(person => ({
+          ...person,
+          ...calculateQuestMetrics(person)
+        }));
+        setSalesData(processedData);
+      }
+    } catch (error) {
+      console.error('Error loading data from WordPress:', error);
+      // Fallback to sample data
+      const processedData = sampleData.map(person => ({
+        ...person,
+        ...calculateQuestMetrics(person)
+      }));
+      setSalesData(processedData);
+    }
+  }, [WORDPRESS_API_BASE, sampleData, calculateQuestMetrics]);
+
+  useEffect(() => {
+    // Load data from WordPress on component mount
+    loadDataFromWordPress();
+  }, [loadDataFromWordPress]);
+
+  // Save data to localStorage whenever salesData changes
+  useEffect(() => {
+    if (salesData.length > 0) {
+      localStorage.setItem('salesDashboardData', JSON.stringify(salesData));
+    }
+  }, [salesData]);
+
+  const saveToWordPress = async (salesData) => {
+    try {
+      const response = await fetch(`${WORDPRESS_API_BASE}/upload`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          salesData: salesData,
+          title: `Sales Data - ${new Date().toLocaleDateString()}`
+        })
+      });
+      const result = await response.json();
+      if (result.success) {
+        setUploadMessage(`✅ Successfully saved ${result.count} sales warriors to WordPress!`);
+        // Don't reload from WordPress - keep the current data visible
+      } else {
+        setUploadMessage('❌ Error saving to WordPress: ' + result.message + ' (Data still visible locally)');
+      }
+    } catch (error) {
+      setUploadMessage('❌ Error connecting to WordPress: ' + error.message + ' (Data still visible locally)');
+      console.error('WordPress save error:', error);
+    }
   };
 
   const handleFileUpload = (event) => {
