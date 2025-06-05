@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 const SalesQuestDashboard = () => {
   const [salesData, setSalesData] = useState([]);
   const [uploadMessage, setUploadMessage] = useState('');
   const [selectedView, setSelectedView] = useState('leaderboard');
-  const [selectedPeriod, setSelectedPeriod] = useState('monthly');
   const [showUploadModal, setShowUploadModal] = useState(false);
   
   // WordPress API configuration
@@ -62,7 +61,7 @@ const SalesQuestDashboard = () => {
   useEffect(() => {
     // Load data from WordPress on component mount
     loadDataFromWordPress();
-  }, []);
+  }, [loadDataFromWordPress]);
 
   // Save data to localStorage whenever salesData changes
   useEffect(() => {
@@ -71,7 +70,7 @@ const SalesQuestDashboard = () => {
     }
   }, [salesData]);
 
-  const loadDataFromWordPress = async () => {
+  const loadDataFromWordPress = useCallback(async () => {
     // First, check for locally stored data
     const localData = localStorage.getItem('salesDashboardData');
     if (localData) {
@@ -119,7 +118,7 @@ const SalesQuestDashboard = () => {
       }));
       setSalesData(processedData);
     }
-  };
+  }, [WORDPRESS_API_BASE, sampleData]);
 
   const saveToWordPress = async (salesData) => {
     try {
