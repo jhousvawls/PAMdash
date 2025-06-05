@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Upload, Trophy, Target, TrendingUp, Users, Award, Calendar, Download, Filter, Star, Zap, Crown, Medal, Phone, UserCheck, DollarSign, CheckCircle, AlertCircle, Flame } from 'lucide-react';
 
 const SalesQuestDashboard = () => {
   const [salesData, setSalesData] = useState([]);
@@ -11,25 +10,17 @@ const SalesQuestDashboard = () => {
   // WordPress API configuration
   const WORDPRESS_API_BASE = 'https://pamdash.wpenginepowered.com/wp-json/sales/v1';
 
-  // Sample data with your 5 metrics
+  // Sample data with percentage-based metrics
   const sampleData = [
     {
       id: 1,
       name: "Sarah Johnson",
       avatar: "SJ",
-      // Goals
-      callsGoal: 100,
-      pemGoal: 20,
-      oppsGoal: 8,
-      oppsPassedMrrGoal: 50000,
-      closedWonMrrGoal: 25000,
-      // Actuals
-      callsActual: 89,
-      pemActual: 24,
-      oppsActual: 8,
-      oppsPassedMrrActual: 58000,
-      closedWonMrrActual: 32000,
-      // Calculated fields
+      callsPercent: 89,
+      pemPercent: 120,
+      oppsActualPercent: 100,
+      oppsPassedPercent: 116,
+      closedWonPercent: 128,
       totalQuestScore: 0,
       completedQuests: [],
       level: "Quest Master",
@@ -40,16 +31,11 @@ const SalesQuestDashboard = () => {
       id: 2,
       name: "Mike Chen",
       avatar: "MC",
-      callsGoal: 80,
-      pemGoal: 15,
-      oppsGoal: 6,
-      oppsPassedMrrGoal: 40000,
-      closedWonMrrGoal: 20000,
-      callsActual: 76,
-      pemActual: 19,
-      oppsActual: 6,
-      oppsPassedMrrActual: 45000,
-      closedWonMrrActual: 18500,
+      callsPercent: 95,
+      pemPercent: 127,
+      oppsActualPercent: 100,
+      oppsPassedPercent: 113,
+      closedWonPercent: 93,
       totalQuestScore: 0,
       completedQuests: [],
       level: "Quest Warrior",
@@ -60,16 +46,11 @@ const SalesQuestDashboard = () => {
       id: 3,
       name: "Emma Williams",
       avatar: "EW",
-      callsGoal: 90,
-      pemGoal: 18,
-      oppsGoal: 7,
-      oppsPassedMrrGoal: 45000,
-      closedWonMrrGoal: 22000,
-      callsActual: 112,
-      pemActual: 15,
-      oppsActual: 4,
-      oppsPassedMrrActual: 35000,
-      closedWonMrrActual: 28000,
+      callsPercent: 124,
+      pemPercent: 83,
+      oppsActualPercent: 57,
+      oppsPassedPercent: 78,
+      closedWonPercent: 127,
       totalQuestScore: 0,
       completedQuests: [],
       level: "Quest Explorer",
@@ -83,7 +64,34 @@ const SalesQuestDashboard = () => {
     loadDataFromWordPress();
   }, []);
 
+  // Save data to localStorage whenever salesData changes
+  useEffect(() => {
+    if (salesData.length > 0) {
+      localStorage.setItem('salesDashboardData', JSON.stringify(salesData));
+    }
+  }, [salesData]);
+
   const loadDataFromWordPress = async () => {
+    // First, check for locally stored data
+    const localData = localStorage.getItem('salesDashboardData');
+    if (localData) {
+      try {
+        const parsedLocalData = JSON.parse(localData);
+        // Check if the data has the new percentage format
+        if (parsedLocalData.length > 0 && parsedLocalData[0].closedWonPercent !== undefined) {
+          setSalesData(parsedLocalData);
+          return; // Use local data and exit early
+        } else {
+          // Clear old format data
+          localStorage.removeItem('salesDashboardData');
+        }
+      } catch (error) {
+        console.error('Error parsing local data:', error);
+        localStorage.removeItem('salesDashboardData'); // Clear corrupted data
+      }
+    }
+
+    // If no local data, try WordPress
     try {
       const response = await fetch(`${WORDPRESS_API_BASE}/data`);
       const result = await response.json();
@@ -141,49 +149,44 @@ const SalesQuestDashboard = () => {
   const calculateQuestMetrics = (person) => {
     const quests = [
       {
-        name: "Revenue Royalty",
-        icon: Crown,
-        goal: person.closedWonMrrGoal,
-        actual: person.closedWonMrrActual,
-        type: "closed_mrr", 
+        name: "Closed Won",
+        icon: "💰",
+        completionRate: person.closedWonPercent || 0,
+        type: "closed_won", 
         weight: 60, // 60% of total score
         maxPoints: 600
       },
       {
-        name: "Pipeline Paladin", 
-        icon: TrendingUp,
-        goal: person.oppsPassedMrrGoal,
-        actual: person.oppsPassedMrrActual,
-        type: "pipeline_mrr",
+        name: "Pipeline Passed", 
+        icon: "📈",
+        completionRate: person.oppsPassedPercent || 0,
+        type: "opps_passed",
         weight: 15, // 15% of total score
         maxPoints: 150
       },
       {
-        name: "Call Crusader",
-        icon: Phone,
-        goal: person.callsGoal,
-        actual: person.callsActual,
+        name: "Calls",
+        icon: "📞",
+        completionRate: person.callsPercent || 0,
         type: "calls",
-        weight: 8, // 8% of total score
-        maxPoints: 80
+        weight: 5, // 5% of total score
+        maxPoints: 50
       },
       {
-        name: "PEM Pioneer",
-        icon: UserCheck,
-        goal: person.pemGoal,
-        actual: person.pemActual,
+        name: "PEM",
+        icon: "👤",
+        completionRate: person.pemPercent || 0,
         type: "pem",
-        weight: 10, // 10% of total score
-        maxPoints: 100
+        weight: 5, // 5% of total score
+        maxPoints: 50
       },
       {
-        name: "Opportunity Oracle",
-        icon: Target,
-        goal: person.oppsGoal,
-        actual: person.oppsActual,
+        name: "Opportunities Created",
+        icon: "🎯",
+        completionRate: person.oppsActualPercent || 0,
         type: "opportunities",
-        weight: 7, // 7% of total score
-        maxPoints: 70
+        weight: 15, // 15% of total score
+        maxPoints: 150
       }
     ];
 
@@ -192,12 +195,12 @@ const SalesQuestDashboard = () => {
     let totalPossibleScore = 1000; // Total possible points
 
     quests.forEach(quest => {
-      const completionRate = Math.min((quest.actual / quest.goal) * 100, 150); // Cap at 150%
+      const completionRate = Math.min(quest.completionRate, 150); // Cap at 150%
       const questScore = Math.round((completionRate / 100) * quest.maxPoints);
       
       totalQuestScore += questScore;
 
-      if (quest.actual >= quest.goal) {
+      if (quest.completionRate >= 100) {
         completedQuests.push({
           ...quest,
           completionRate,
@@ -253,19 +256,15 @@ const SalesQuestDashboard = () => {
               }
             });
             
-            // Map to our expected field names
+            // Map to our expected field names (percentage-based)
             entry.name = dataMap['PAM'] || '';
-            entry.team = 'Sales Team'; // Default team since no team column
-            entry.callsGoal = parseFloat(dataMap['Calls Goal']) || 0;
-            entry.callsActual = parseFloat(dataMap['Calls Actual']) || 0;
-            entry.pemGoal = parseFloat(dataMap['PEM Goal']) || 0;
-            entry.pemActual = parseFloat(dataMap['PEM Actual']) || 0;
-            entry.oppsGoal = parseFloat(dataMap['Opps Goal']) || 0;
-            entry.oppsActual = parseFloat(dataMap['Opps Actual']) || 0;
-            entry.oppsPassedMrrGoal = parseFloat(dataMap['Opps Passed Goal']) || 0;
-            entry.oppsPassedMrrActual = parseFloat(dataMap['Opps Passed Actual']) || 0;
-            entry.closedWonMrrGoal = parseFloat(dataMap['Closed Won Goal']) || 0;
-            entry.closedWonMrrActual = parseFloat(dataMap['Closed Won Actual']) || 0;
+            entry.team = 'Sales Team'; // Default team
+            entry.photoUrl = dataMap['Photo URL'] || '';
+            entry.callsPercent = parseFloat(dataMap['Calls %']) || 0;
+            entry.pemPercent = parseFloat(dataMap['PEM %']) || 0;
+            entry.oppsActualPercent = parseFloat(dataMap['Opps Actual %']) || 0;
+            entry.oppsPassedPercent = parseFloat(dataMap['Opps Passed %']) || 0;
+            entry.closedWonPercent = parseFloat(dataMap['Closed Won %']) || 0;
             
             entry.avatar = entry.name ? entry.name.split(' ').map(n => n[0]).join('') : 'XX';
             return { ...entry, ...calculateQuestMetrics(entry) };
@@ -287,13 +286,13 @@ const SalesQuestDashboard = () => {
   };
 
   const downloadTemplate = () => {
-    const csvContent = `PAM,Calls Goal,Calls Actual,Calls %,PEM Goal,PEM Actual,PEM %,Opps Goal,Opps Actual,Opps Actual %,Opps Passed Goal,Opps Passed Actual,Opps Passed %,Closed Won Goal,Closed Won Actual,Closed Won %
-Sarah Johnson,100,89,89,20,24,120,8,8,100,50000,58000,116,25000,32000,128
-Mike Chen,80,76,95,15,19,127,6,6,100,40000,45000,113,20000,18500,93
-Emma Williams,90,112,124,18,15,83,7,4,57,45000,35000,78,22000,28000,127
-David Rodriguez,85,82,96,16,14,88,5,3,60,35000,28000,80,18000,22000,122
-Lisa Thompson,95,103,108,22,25,114,9,7,78,55000,62000,113,30000,35000,117
-Alex Kim,75,71,95,12,16,133,4,5,125,30000,38000,127,15000,19000,127`;
+    const csvContent = `PAM,Photo URL,Calls %,PEM %,Opps Actual %,Opps Passed %,Closed Won %
+Sarah Johnson,https://example.com/photos/sarah.jpg,89,120,100,116,128
+Mike Chen,https://example.com/photos/mike.jpg,95,127,100,113,93
+Emma Williams,https://example.com/photos/emma.jpg,124,83,57,78,127
+David Rodriguez,https://example.com/photos/david.jpg,96,88,60,80,122
+Lisa Thompson,https://example.com/photos/lisa.jpg,108,114,78,113,117
+Alex Kim,https://example.com/photos/alex.jpg,95,133,125,127,127`;
     
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
@@ -307,51 +306,199 @@ Alex Kim,75,71,95,12,16,133,4,5,125,30000,38000,127,15000,19000,127`;
   };
 
   const getQuestStatusColor = (status, completionRate) => {
-    if (status === 'completed') return 'bg-wp-teal';
-    if (status === 'almost') return 'bg-wp-blue';
-    if (completionRate >= 50) return 'bg-wp-blue';
+    if (status === 'completed') return 'bg-green-500';
+    if (status === 'almost') return 'bg-yellow-500';
+    if (completionRate >= 50) return 'bg-blue-500';
     return 'bg-gray-400';
   };
 
   const getQuestStatusIcon = (status) => {
-    if (status === 'completed') return <CheckCircle className="w-5 h-5 text-wp-teal" />;
-    if (status === 'almost') return <AlertCircle className="w-5 h-5 text-wp-blue" />;
-    return <Target className="w-5 h-5 text-wp-navy" />;
+    if (status === 'completed') return <span className="text-green-500">✅</span>;
+    if (status === 'almost') return <span className="text-yellow-500">⚠️</span>;
+    return <span className="text-blue-500">🎯</span>;
   };
 
   const getLevelIcon = (level) => {
     switch (level) {
-      case 'Quest Legendary': return <Crown className="w-6 h-6 text-yellow-500" />;
-      case 'Quest Master': return <Trophy className="w-6 h-6 text-wp-teal" />;
-      case 'Quest Warrior': return <Medal className="w-6 h-6 text-wp-blue" />;
-      case 'Quest Explorer': return <Star className="w-6 h-6 text-wp-navy" />;
-      default: return <Award className="w-6 h-6 text-gray-500" />;
+      case 'Quest Legendary': return <span className="text-yellow-500">🏆</span>;
+      case 'Quest Master': return <span className="text-teal-500">🏆</span>;
+      case 'Quest Warrior': return <span className="text-blue-500">🥇</span>;
+      case 'Quest Explorer': return <span className="text-blue-600">⭐</span>;
+      default: return <span className="text-gray-500">🥇</span>;
     }
   };
 
+  // Avatar component to handle image loading with fallback
+  const Avatar = ({ person, size = "w-14 h-14", textSize = "text-xl" }) => {
+    const [imageError, setImageError] = useState(false);
+    const hasPartyHat = person.closedWonPercent >= 100;
+    
+    const avatarContent = person.photoUrl && !imageError ? (
+      <img
+        src={person.photoUrl}
+        alt={person.name}
+        className={`${size} rounded-full object-cover border-2 border-white shadow-lg`}
+        onError={() => setImageError(true)}
+      />
+    ) : (
+      <div className={`${size} bg-gradient-to-r from-blue-600 to-blue-800 rounded-full flex items-center justify-center text-white font-bold ${textSize} font-inter`}>
+        {person.avatar}
+      </div>
+    );
+
+    if (hasPartyHat) {
+      return (
+        <div className="relative">
+          {avatarContent}
+          {/* Party Hat */}
+          <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 z-10">
+            <div className="relative">
+              {/* Hat cone */}
+              <div className="w-0 h-0 border-l-[8px] border-r-[8px] border-b-[12px] border-l-transparent border-r-transparent border-b-purple-500"></div>
+              {/* Hat stripes */}
+              <div className="absolute top-1 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-[6px] border-r-[6px] border-b-[2px] border-l-transparent border-r-transparent border-b-yellow-400"></div>
+              <div className="absolute top-3 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-[4px] border-r-[4px] border-b-[2px] border-l-transparent border-r-transparent border-b-pink-400"></div>
+              {/* Hat pom-pom */}
+              <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-orange-400 rounded-full"></div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return avatarContent;
+  };
+
   const sortedData = [...salesData].sort((a, b) => b.totalQuestScore - a.totalQuestScore);
+  const summitSortedData = [...salesData].sort((a, b) => b.closedWonPercent - a.closedWonPercent);
+
+  // Function to calculate mountain position based on closed won percentage
+  const getMountainPosition = (closedWonPercent) => {
+    const percentage = Math.min(closedWonPercent, 150); // Cap at 150%
+    
+    if (percentage >= 100) return { bottom: '75%', left: '50%', level: 'summit' };
+    if (percentage >= 75) return { bottom: '60%', left: '45%', level: 'high' };
+    if (percentage >= 50) return { bottom: '45%', left: '40%', level: 'mid' };
+    if (percentage >= 25) return { bottom: '30%', left: '35%', level: 'low' };
+    return { bottom: '15%', left: '30%', level: 'base' };
+  };
+
+  const renderSummitChallenge = () => (
+    <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+      <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+        <span className="text-2xl">🏔️</span>
+        Summit Challenge - Closed Won Performance
+      </h2>
+      
+      {/* Mountain Container */}
+      <div className="relative w-full h-96 bg-gradient-to-b from-blue-400 via-blue-300 to-blue-200 rounded-lg overflow-hidden">
+        {/* Clouds */}
+        <div className="absolute top-4 left-8 w-16 h-8 bg-white rounded-full opacity-80"></div>
+        <div className="absolute top-6 left-12 w-12 h-6 bg-white rounded-full opacity-60"></div>
+        <div className="absolute top-8 right-16 w-20 h-10 bg-white rounded-full opacity-70"></div>
+        <div className="absolute top-12 right-20 w-14 h-7 bg-white rounded-full opacity-50"></div>
+        <div className="absolute top-16 left-1/4 w-18 h-9 bg-white rounded-full opacity-60"></div>
+        
+        {/* Mountain */}
+        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2">
+          {/* Mountain Base */}
+          <div className="relative">
+            <div className="w-0 h-0 border-l-[200px] border-r-[200px] border-b-[300px] border-l-transparent border-r-transparent border-b-gray-600"></div>
+            {/* Mountain Snow Cap */}
+            <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-[80px] border-r-[80px] border-b-[120px] border-l-transparent border-r-transparent border-b-white"></div>
+            
+            {/* Party Parrot at Summit */}
+            <div className="absolute -top-8 left-1/2 transform -translate-x-1/2">
+              <img 
+                src="https://media.tenor.com/8AqUPOC5GMgAAAAm/parrot-party.webp" 
+                alt="Party Parrot at Summit" 
+                className="w-12 h-12"
+              />
+            </div>
+          </div>
+        </div>
+        
+        {/* Sales Reps positioned on mountain */}
+        {summitSortedData.map((person, index) => {
+          const position = getMountainPosition(person.closedWonPercent);
+          const horizontalOffset = index * 35; // Increased spacing between people
+          const verticalJitter = (index % 3) * 8; // Add slight vertical variation to avoid perfect alignment
+          
+          return (
+            <div
+              key={person.id}
+              className="absolute transform -translate-x-1/2 -translate-y-1/2 transition-all duration-1000 ease-in-out group cursor-pointer"
+              style={{
+                bottom: `calc(${position.bottom} + ${verticalJitter}px)`,
+                left: `calc(${position.left} + ${horizontalOffset - 60}px)`,
+              }}
+            >
+              {/* Climber Avatar */}
+              <div className="relative">
+                <Avatar person={person} size="w-10 h-10" textSize="text-sm" />
+                
+                {/* Tooltip on hover */}
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+                  <div className="bg-gray-800 text-white text-xs rounded-lg px-3 py-2 whitespace-nowrap">
+                    <div className="font-semibold">{person.name}</div>
+                    <div>Closed Won: {Math.round(person.closedWonPercent)}%</div>
+                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-2 border-r-2 border-t-4 border-l-transparent border-r-transparent border-t-gray-800"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      
+      
+      {/* Performance Summary */}
+      <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+        {summitSortedData.slice(0, 3).map((person, index) => (
+          <div key={person.id} className={`p-4 rounded-lg border-2 ${
+            index === 0 ? 'border-yellow-400 bg-yellow-50' :
+            index === 1 ? 'border-gray-400 bg-gray-50' :
+            'border-orange-400 bg-orange-50'
+          }`}>
+            <div className="flex items-center gap-3 mb-2">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold ${
+                index === 0 ? 'bg-yellow-500' :
+                index === 1 ? 'bg-gray-500' :
+                'bg-orange-500'
+              }`}>
+                {index + 1}
+              </div>
+              <Avatar person={person} size="w-8 h-8" textSize="text-sm" />
+              <div>
+                <div className="font-semibold text-gray-800">{person.name}</div>
+                <div className="text-sm text-gray-600">{Math.round(person.closedWonPercent)}% Closed Won</div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 
   const renderQuestCard = (person) => (
-    <div key={person.id} className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-wp-teal transition-all duration-300 font-inter">
+    <div key={person.id} className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-teal-500 transition-all duration-300 font-inter">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-4">
-          <div className="w-14 h-14 bg-gradient-to-r from-wp-navy to-wp-blue rounded-full flex items-center justify-center text-white font-bold text-xl font-inter">
-            {person.avatar}
-          </div>
+          <Avatar person={person} />
           <div>
-            <h3 className="text-xl font-bold text-wp-navy font-lora">{person.name}</h3>
+            <h3 className="text-xl font-bold text-gray-800 font-lora">{person.name}</h3>
             <div className="flex items-center gap-2">
               {getLevelIcon(person.level)}
-              <span className="text-sm font-medium text-wp-navy font-inter">{person.level}</span>
+              <span className="text-sm font-medium text-gray-600 font-inter">{person.level}</span>
             </div>
-            <div className="text-sm text-gray-500 font-inter">{person.team}</div>
+              <div className="text-sm text-gray-500 font-inter">{person.team || 'Sales Team'}</div>
           </div>
         </div>
         <div className="text-right">
-          <div className="text-3xl font-bold text-wp-teal font-lora">{person.totalQuestScore}</div>
-          <div className="text-sm text-wp-navy font-inter">Quest Points</div>
-          <div className="text-sm text-wp-teal font-medium font-inter">
+          <div className="text-3xl font-bold text-teal-600 font-lora">{person.totalQuestScore}</div>
+          <div className="text-sm text-gray-600 font-inter">Quest Points</div>
+          <div className="text-sm text-teal-600 font-medium font-inter">
             {person.completedQuestCount}/5 Quests Complete
           </div>
         </div>
@@ -360,29 +507,36 @@ Alex Kim,75,71,95,12,16,133,4,5,125,30000,38000,127,15000,19000,127`;
       {/* Quest Progress */}
       <div className="space-y-4">
         {person.quests?.map((quest, index) => {
-          const IconComponent = quest.icon;
           return (
             <div key={index} className="border rounded-lg p-4 bg-gray-50">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-3">
-                  <IconComponent className="w-5 h-5 text-gray-600" />
+                  {quest.type === 'closed_won' && quest.completionRate >= 100 ? (
+                    <img 
+                      src="https://media.tenor.com/8AqUPOC5GMgAAAAm/parrot-party.webp" 
+                      alt="Party Parrot" 
+                      className="w-6 h-6"
+                    />
+                  ) : (
+                    <span className="text-lg">{quest.icon}</span>
+                  )}
                   <span className="font-medium text-gray-800">{quest.name}</span>
                   {getQuestStatusIcon(quest.status)}
                 </div>
                 <div className="text-sm font-medium text-gray-600">
-                  {quest.questScore}/{quest.maxPoints} pts (Weight: {quest.weight}%)
+                  {quest.questScore || 0}/{quest.maxPoints || 0} pts (Weight: {quest.weight || 0}%)
                 </div>
               </div>
               
               <div className="flex items-center justify-between text-sm mb-2">
                 <span className="text-gray-600">
-                  {quest.type.includes('mrr') ? `$${quest.actual.toLocaleString()}` : quest.actual} / {quest.type.includes('mrr') ? `$${quest.goal.toLocaleString()}` : quest.goal}
+                  Performance Achievement
                 </span>
                 <span className={`font-medium ${
                   quest.completionRate >= 100 ? 'text-green-600' :
                   quest.completionRate >= 80 ? 'text-yellow-600' : 'text-teal-600'
                 }`}>
-                  {Math.round(quest.completionRate)}%
+                  {Math.round(quest.completionRate || 0)}%
                 </span>
               </div>
               
@@ -395,8 +549,8 @@ Alex Kim,75,71,95,12,16,133,4,5,125,30000,38000,127,15000,19000,127`;
               
               {quest.completionRate > 100 && (
                 <div className="flex items-center gap-1 mt-1 text-green-600">
-                  <Flame className="w-4 h-4" />
-                  <span className="text-xs font-medium">BONUS! +{Math.round(quest.completionRate - 100)}%</span>
+                  <span className="text-sm">⭐</span>
+                  <span className="text-xs font-medium">BONUS! +{Math.round((quest.completionRate || 0) - 100)}%</span>
                 </div>
               )}
             </div>
@@ -409,13 +563,13 @@ Alex Kim,75,71,95,12,16,133,4,5,125,30000,38000,127,15000,19000,127`;
         <div className="flex items-center justify-between mb-2">
           <span className="font-medium text-gray-800">Overall Quest Progress</span>
           <span className="text-sm font-bold text-teal-600">
-            {Math.round(person.overallCompletion)}%
+            {Math.round(person.overallCompletion || 0)}%
           </span>
         </div>
         <div className="w-full bg-gray-200 rounded-full h-4">
           <div
             className="h-4 rounded-full bg-gradient-to-r from-teal-500 to-blue-500 transition-all duration-500"
-            style={{ width: `${Math.min(person.overallCompletion, 100)}%` }}
+            style={{ width: `${Math.min(person.overallCompletion || 0, 100)}%` }}
           ></div>
         </div>
       </div>
@@ -446,9 +600,7 @@ Alex Kim,75,71,95,12,16,133,4,5,125,30000,38000,127,15000,19000,127`;
                   {index + 1}
                 </div>
                 
-                <div className="w-12 h-12 bg-gradient-to-r from-teal-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                  {person.avatar}
-                </div>
+                <Avatar person={person} size="w-12 h-12" textSize="text-lg" />
                 
                 <div>
                   <h3 className="font-bold text-lg text-gray-900">{person.name}</h3>
@@ -461,97 +613,44 @@ Alex Kim,75,71,95,12,16,133,4,5,125,30000,38000,127,15000,19000,127`;
               </div>
               
               <div className="text-right">
-                <div className="text-3xl font-bold text-teal-600">{person.totalQuestScore}</div>
+                <div className="text-3xl font-bold text-teal-600">{person.totalQuestScore || 0}</div>
                 <div className="text-sm text-gray-600">Quest Points</div>
                 <div className="text-sm font-medium text-green-600">
-                  {person.completedQuestCount}/5 Complete
+                  {person.completedQuestCount || 0}/5 Complete
                 </div>
               </div>
             </div>
             
             <div className="mt-4 grid grid-cols-5 gap-2">
-              {person.quests?.map((quest, questIndex) => (
-                <div key={questIndex} className="text-center">
-                  <div className={`w-8 h-8 mx-auto rounded-full flex items-center justify-center ${
-                    quest.status === 'completed' ? 'bg-green-500' :
-                    quest.status === 'almost' ? 'bg-yellow-500' : 'bg-gray-300'
-                  }`}>
-                    <quest.icon className="w-4 h-4 text-white" />
+              {person.quests?.map((quest, questIndex) => {
+                const questTitles = ['Closed Won', 'Pipeline Passed', 'Calls', 'PEM', 'Opportunities'];
+                return (
+                  <div key={questIndex} className="text-center">
+                    <div className={`w-8 h-8 mx-auto rounded-full flex items-center justify-center text-white ${
+                      quest.status === 'completed' ? 'bg-green-500' :
+                      quest.status === 'almost' ? 'bg-yellow-500' : 'bg-gray-300'
+                    }`}>
+                      {quest.type === 'closed_won' && quest.completionRate >= 100 ? (
+                        <img 
+                          src="https://media.tenor.com/8AqUPOC5GMgAAAAm/parrot-party.webp" 
+                          alt="Party Parrot" 
+                          className="w-6 h-6 rounded-full"
+                        />
+                      ) : (
+                        <span className="text-sm">{quest.icon}</span>
+                      )}
+                    </div>
+                    <div className="text-xs mt-1 text-gray-800 font-medium">{questTitles[questIndex]}</div>
+                    <div className="text-xs text-gray-600">{Math.round(quest.completionRate || 0)}%</div>
                   </div>
-                  <div className="text-xs mt-1 text-gray-600">{Math.round(quest.completionRate)}%</div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
       ))}
     </div>
   );
-
-  const renderTeamOverview = () => {
-    const teamStats = salesData.reduce((acc, person) => {
-      const team = person.team || 'Unknown';
-      if (!acc[team]) {
-        acc[team] = {
-          members: [],
-          totalQuestScore: 0,
-          completedQuests: 0,
-          totalPossibleQuests: 0
-        };
-      }
-      acc[team].members.push(person);
-      acc[team].totalQuestScore += person.totalQuestScore || 0;
-      acc[team].completedQuests += person.completedQuestCount || 0;
-      acc[team].totalPossibleQuests += 5;
-      return acc;
-    }, {});
-
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {Object.entries(teamStats).map(([teamName, stats]) => (
-          <div key={teamName} className="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
-            <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <Users className="w-6 h-6 text-teal-500" />
-              {teamName}
-            </h3>
-            
-            <div className="space-y-4">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Team Members:</span>
-                <span className="font-medium">{stats.members.length}</span>
-              </div>
-              
-              <div className="flex justify-between">
-                <span className="text-teal-600">Total Quest Points:</span>
-                <span className="font-bold text-teal-600">{stats.totalQuestScore}</span>
-              </div>
-              
-              <div className="flex justify-between">
-                <span className="text-gray-600">Completed Quests:</span>
-                <span className="font-medium text-green-600">
-                  {stats.completedQuests}/{stats.totalPossibleQuests}
-                </span>
-              </div>
-              
-              <div className="space-y-2">
-                {stats.members.map(member => (
-                  <div key={member.id} className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 bg-gradient-to-r from-teal-500 to-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                        {member.avatar}
-                      </div>
-                      <span>{member.name}</span>
-                    </div>
-                    <span className="font-medium text-teal-600">{member.totalQuestScore}pts</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-teal-50 p-6 font-inter">
@@ -560,26 +659,28 @@ Alex Kim,75,71,95,12,16,133,4,5,125,30000,38000,127,15000,19000,127`;
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-4">
-              <div className="bg-wp-navy text-white px-4 py-2 rounded-lg font-bold text-xl font-inter">
-                WP ENGINE
-              </div>
+              <img 
+                src="https://wpmktgatlas.wpengine.com/wp-content/uploads/2025/06/WP-Engine-15-year-anniversary.svg"
+                alt="WP Engine"
+                className="h-12 w-auto"
+                onError={(e) => {e.target.style.display = 'none'}}
+              />
               <div className="h-8 w-px bg-gray-300"></div>
-              <h1 className="text-4xl font-bold text-wp-navy flex items-center gap-3 font-lora">
-                <Trophy className="w-10 h-10 text-wp-teal" />
+              <h1 className="text-4xl font-bold text-gray-800 flex items-center gap-3 font-lora">
+                <span className="text-3xl">🏆</span>
                 Sales Performance Dashboard
               </h1>
             </div>
             <button
               onClick={() => setShowUploadModal(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-wp-blue hover:bg-blue-700 text-white rounded-lg transition-colors font-medium font-inter"
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium font-inter"
             >
-              <Upload className="w-4 h-4" />
+              <span>📤</span>
               Upload Data
             </button>
           </div>
-          <p className="text-wp-navy font-inter">Track your sales performance and achieve excellence with WP Engine</p>
+          <p className="text-gray-700 font-inter">Track your sales performance and achieve excellence with WP Engine</p>
         </div>
-
 
         {/* Navigation */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-8 border border-gray-100">
@@ -588,8 +689,8 @@ Alex Kim,75,71,95,12,16,133,4,5,125,30000,38000,127,15000,19000,127`;
               onClick={() => setSelectedView('leaderboard')}
               className={`px-4 py-2 rounded-lg font-medium transition-colors font-inter ${
                 selectedView === 'leaderboard' 
-                  ? 'bg-wp-navy text-white' 
-                  : 'bg-gray-100 text-wp-navy hover:bg-blue-50'
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
               }`}
             >
               Leaderboard
@@ -598,11 +699,21 @@ Alex Kim,75,71,95,12,16,133,4,5,125,30000,38000,127,15000,19000,127`;
               onClick={() => setSelectedView('overview')}
               className={`px-4 py-2 rounded-lg font-medium transition-colors font-inter ${
                 selectedView === 'overview' 
-                  ? 'bg-wp-navy text-white' 
-                  : 'bg-gray-100 text-wp-navy hover:bg-blue-50'
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
               }`}
             >
               Performance Overview
+            </button>
+            <button
+              onClick={() => setSelectedView('summit')}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors font-inter ${
+                selectedView === 'summit' 
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+              }`}
+            >
+              🏔️ Summit Challenge
             </button>
           </div>
         </div>
@@ -610,19 +721,21 @@ Alex Kim,75,71,95,12,16,133,4,5,125,30000,38000,127,15000,19000,127`;
         {/* Content */}
         {selectedView === 'overview' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-            {salesData.map(renderQuestCard)}
+            {sortedData.map(renderQuestCard)}
           </div>
         )}
 
         {selectedView === 'leaderboard' && (
           <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
             <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-              <Trophy className="w-6 h-6 text-yellow-500" />
+              <span className="text-2xl">🏆</span>
               Quest Leaderboard
             </h2>
             {renderLeaderboard()}
           </div>
         )}
+
+        {selectedView === 'summit' && renderSummitChallenge()}
 
         {/* Upload Modal */}
         {showUploadModal && (
@@ -630,7 +743,7 @@ Alex Kim,75,71,95,12,16,133,4,5,125,30000,38000,127,15000,19000,127`;
             <div className="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full mx-4">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
-                  <Upload className="w-5 h-5" />
+                  <span>📤</span>
                   Upload Sales Data
                 </h2>
                 <button
@@ -655,10 +768,10 @@ Alex Kim,75,71,95,12,16,133,4,5,125,30000,38000,127,15000,19000,127`;
                   id="modal-csv-upload"
                 />
                 <label htmlFor="modal-csv-upload" className="cursor-pointer">
-                  <Upload className="w-10 h-10 text-gray-400 mx-auto mb-3" />
+                  <span className="text-4xl block mb-3">📤</span>
                   <p className="text-lg text-gray-600 mb-2">Upload CSV File</p>
                   <p className="text-sm text-gray-500">
-                    Headers: PAM, Calls Goal/Actual/%, PEM Goal/Actual/%, Opps Goal/Actual/%, Opps Passed Goal/Actual/%, Closed Won Goal/Actual/%
+                    Headers: PAM, Photo URL, Calls %, PEM %, Opps Actual %, Opps Passed %, Closed Won %
                   </p>
                 </label>
               </div>
@@ -668,7 +781,7 @@ Alex Kim,75,71,95,12,16,133,4,5,125,30000,38000,127,15000,19000,127`;
                   onClick={downloadTemplate}
                   className="flex items-center gap-2 px-4 py-2 bg-orange-100 hover:bg-orange-200 text-orange-700 rounded-lg transition-colors text-sm font-medium"
                 >
-                  <Download className="w-4 h-4" />
+                  <span>📥</span>
                   Download Template
                 </button>
                 <button
