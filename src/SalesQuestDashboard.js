@@ -15,6 +15,7 @@ const SalesQuestDashboard = () => {
       id: 1,
       name: "Sarah Johnson",
       avatar: "SJ",
+      photoUrl: "", // Empty to force fallback to initials
       callsPercent: 89,
       pemPercent: 120,
       oppsActualPercent: 100,
@@ -30,6 +31,7 @@ const SalesQuestDashboard = () => {
       id: 2,
       name: "Mike Chen",
       avatar: "MC",
+      photoUrl: "", // Empty to force fallback to initials
       callsPercent: 95,
       pemPercent: 127,
       oppsActualPercent: 100,
@@ -45,6 +47,7 @@ const SalesQuestDashboard = () => {
       id: 3,
       name: "Emma Williams",
       avatar: "EW",
+      photoUrl: "", // Empty to force fallback to initials
       callsPercent: 124,
       pemPercent: 83,
       oppsActualPercent: 57,
@@ -332,7 +335,34 @@ Alex Kim,https://example.com/photos/alex.jpg,95,133,125,127,127`;
     const [imageError, setImageError] = useState(false);
     const hasPartyHat = person.closedWonPercent >= 100;
     
-    const avatarContent = person.photoUrl && !imageError ? (
+    // Generate avatar initials from name if avatar field is missing
+    const getInitials = (name) => {
+      if (!name) return 'XX';
+      return name.split(' ').map(n => n[0]).join('').toUpperCase();
+    };
+    
+    const initials = person.avatar || getInitials(person.name);
+    
+    // Generate consistent colors based on name
+    const getAvatarColor = (name) => {
+      if (!name) return 'from-blue-600 to-blue-800';
+      const colors = [
+        'from-blue-600 to-blue-800',
+        'from-green-600 to-green-800',
+        'from-purple-600 to-purple-800',
+        'from-red-600 to-red-800',
+        'from-yellow-600 to-yellow-800',
+        'from-indigo-600 to-indigo-800',
+        'from-pink-600 to-pink-800',
+        'from-teal-600 to-teal-800'
+      ];
+      const hash = name.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
+      return colors[hash % colors.length];
+    };
+    
+    const avatarColor = getAvatarColor(person.name);
+    
+    const avatarContent = person.photoUrl && person.photoUrl.trim() && !imageError ? (
       <img
         src={person.photoUrl}
         alt={person.name}
@@ -340,8 +370,8 @@ Alex Kim,https://example.com/photos/alex.jpg,95,133,125,127,127`;
         onError={() => setImageError(true)}
       />
     ) : (
-      <div className={`${size} bg-gradient-to-r from-blue-600 to-blue-800 rounded-full flex items-center justify-center text-white font-bold ${textSize} font-inter`}>
-        {person.avatar}
+      <div className={`${size} bg-gradient-to-r ${avatarColor} rounded-full flex items-center justify-center text-white font-bold ${textSize} font-inter shadow-lg border-2 border-white`}>
+        {initials}
       </div>
     );
 
@@ -383,14 +413,14 @@ Alex Kim,https://example.com/photos/alex.jpg,95,133,125,127,127`;
   };
 
   const renderSummitChallenge = () => (
-    <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-        <span className="text-2xl">🏔️</span>
-        Summit Challenge - Closed Won Performance
+    <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 border border-gray-100">
+      <h2 className="text-lg sm:text-2xl font-bold text-gray-800 mb-4 sm:mb-6 flex items-center gap-2">
+        <span className="text-lg sm:text-2xl">🏔️</span>
+        <span className="leading-tight">Summit Challenge - Closed Won Performance</span>
       </h2>
       
       {/* Mountain Container */}
-      <div className="relative w-full h-96 bg-gradient-to-b from-blue-400 via-blue-300 to-blue-200 rounded-lg overflow-hidden">
+      <div className="relative w-full h-64 sm:h-80 lg:h-96 bg-gradient-to-b from-blue-400 via-blue-300 to-blue-200 rounded-lg overflow-hidden">
         {/* Clouds */}
         <div className="absolute top-4 left-8 w-16 h-8 bg-white rounded-full opacity-80"></div>
         <div className="absolute top-6 left-12 w-12 h-6 bg-white rounded-full opacity-60"></div>
@@ -480,24 +510,24 @@ Alex Kim,https://example.com/photos/alex.jpg,95,133,125,127,127`;
   );
 
   const renderQuestCard = (person) => (
-    <div key={person.id} className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-teal-500 transition-all duration-300 font-inter">
+    <div key={person.id} className="bg-white rounded-xl shadow-lg p-4 sm:p-6 border-2 border-gray-200 hover:border-teal-500 transition-all duration-300 font-inter">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center space-x-4">
-          <Avatar person={person} />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-0 mb-4 sm:mb-6">
+        <div className="flex items-center space-x-3 sm:space-x-4">
+          <Avatar person={person} size="w-12 h-12 sm:w-14 sm:h-14" textSize="text-lg sm:text-xl" />
           <div>
-            <h3 className="text-xl font-bold text-gray-800 font-lora">{person.name}</h3>
+            <h3 className="text-lg sm:text-xl font-bold text-gray-800 font-lora">{person.name}</h3>
             <div className="flex items-center gap-2">
               {getLevelIcon(person.level)}
-              <span className="text-sm font-medium text-gray-600 font-inter">{person.level}</span>
+              <span className="text-xs sm:text-sm font-medium text-gray-600 font-inter">{person.level}</span>
             </div>
-              <div className="text-sm text-gray-500 font-inter">{person.team || 'Sales Team'}</div>
+            <div className="text-xs sm:text-sm text-gray-500 font-inter">{person.team || 'Sales Team'}</div>
           </div>
         </div>
-        <div className="text-right">
-          <div className="text-3xl font-bold text-teal-600 font-lora">{person.totalQuestScore}</div>
-          <div className="text-sm text-gray-600 font-inter">Quest Points</div>
-          <div className="text-sm text-teal-600 font-medium font-inter">
+        <div className="text-center sm:text-right">
+          <div className="text-2xl sm:text-3xl font-bold text-teal-600 font-lora">{person.totalQuestScore}</div>
+          <div className="text-xs sm:text-sm text-gray-600 font-inter">Quest Points</div>
+          <div className="text-xs sm:text-sm text-teal-600 font-medium font-inter">
             {person.completedQuestCount}/5 Quests Complete
           </div>
         </div>
@@ -576,7 +606,7 @@ Alex Kim,https://example.com/photos/alex.jpg,95,133,125,127,127`;
   );
 
   const renderLeaderboard = () => (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4">
       {sortedData.map((person, index) => (
         <div
           key={person.id}
@@ -587,10 +617,10 @@ Alex Kim,https://example.com/photos/alex.jpg,95,133,125,127,127`;
             'border-gray-200 bg-white'
           }`}
         >
-          <div className="p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-white text-lg ${
+          <div className="p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-0">
+              <div className="flex items-center space-x-3 sm:space-x-4">
+                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center font-bold text-white text-base sm:text-lg ${
                   index === 0 ? 'bg-gradient-to-r from-yellow-400 to-yellow-600' :
                   index === 1 ? 'bg-gradient-to-r from-gray-400 to-gray-600' :
                   index === 2 ? 'bg-gradient-to-r from-orange-400 to-orange-600' :
@@ -599,33 +629,34 @@ Alex Kim,https://example.com/photos/alex.jpg,95,133,125,127,127`;
                   {index + 1}
                 </div>
                 
-                <Avatar person={person} size="w-12 h-12" textSize="text-lg" />
+                <Avatar person={person} size="w-10 h-10 sm:w-12 sm:h-12" textSize="text-base sm:text-lg" />
                 
                 <div>
-                  <h3 className="font-bold text-lg text-gray-900">{person.name}</h3>
+                  <h3 className="font-bold text-base sm:text-lg text-gray-900">{person.name}</h3>
                   <div className="flex items-center gap-2">
                     {getLevelIcon(person.level)}
-                    <span className="text-sm font-medium text-gray-600">{person.level}</span>
+                    <span className="text-xs sm:text-sm font-medium text-gray-600">{person.level}</span>
                   </div>
-                  <div className="text-sm text-gray-500">{person.team}</div>
+                  <div className="text-xs sm:text-sm text-gray-500">{person.team}</div>
                 </div>
               </div>
               
-              <div className="text-right">
-                <div className="text-3xl font-bold text-teal-600">{person.totalQuestScore || 0}</div>
-                <div className="text-sm text-gray-600">Quest Points</div>
-                <div className="text-sm font-medium text-green-600">
+              <div className="text-center sm:text-right">
+                <div className="text-2xl sm:text-3xl font-bold text-teal-600">{person.totalQuestScore || 0}</div>
+                <div className="text-xs sm:text-sm text-gray-600">Quest Points</div>
+                <div className="text-xs sm:text-sm font-medium text-green-600">
                   {person.completedQuestCount || 0}/5 Complete
                 </div>
               </div>
             </div>
             
-            <div className="mt-4 grid grid-cols-5 gap-2">
+            <div className="mt-4 grid grid-cols-5 gap-1 sm:gap-2">
               {person.quests?.map((quest, questIndex) => {
                 const questTitles = ['Closed Won', 'Pipeline Passed', 'Calls', 'PEM', 'Opportunities'];
+                const shortTitles = ['Won', 'Pipeline', 'Calls', 'PEM', 'Opps'];
                 return (
                   <div key={questIndex} className="text-center">
-                    <div className={`w-8 h-8 mx-auto rounded-full flex items-center justify-center text-white ${
+                    <div className={`w-6 h-6 sm:w-8 sm:h-8 mx-auto rounded-full flex items-center justify-center text-white ${
                       quest.status === 'completed' ? 'bg-green-500' :
                       quest.status === 'almost' ? 'bg-yellow-500' : 'bg-gray-300'
                     }`}>
@@ -633,13 +664,14 @@ Alex Kim,https://example.com/photos/alex.jpg,95,133,125,127,127`;
                         <img 
                           src="https://media.tenor.com/8AqUPOC5GMgAAAAm/parrot-party.webp" 
                           alt="Party Parrot" 
-                          className="w-6 h-6 rounded-full"
+                          className="w-4 h-4 sm:w-6 sm:h-6 rounded-full"
                         />
                       ) : (
-                        <span className="text-sm">{quest.icon}</span>
+                        <span className="text-xs sm:text-sm">{quest.icon}</span>
                       )}
                     </div>
-                    <div className="text-xs mt-1 text-gray-800 font-medium">{questTitles[questIndex]}</div>
+                    <div className="text-xs mt-1 text-gray-800 font-medium hidden sm:block">{questTitles[questIndex]}</div>
+                    <div className="text-xs mt-1 text-gray-800 font-medium sm:hidden">{shortTitles[questIndex]}</div>
                     <div className="text-xs text-gray-600">{Math.round(quest.completionRate || 0)}%</div>
                   </div>
                 );
@@ -652,61 +684,64 @@ Alex Kim,https://example.com/photos/alex.jpg,95,133,125,127,127`;
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-teal-50 p-6 font-inter">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-teal-50 p-3 sm:p-6 font-inter">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-4">
-              <img 
-                src="https://wpmktgatlas.wpengine.com/wp-content/uploads/2025/06/WP-Engine-15-year-anniversary.svg"
-                alt="WP Engine"
-                className="h-12 w-auto"
-                onError={(e) => {e.target.style.display = 'none'}}
-              />
-              <div className="h-8 w-px bg-gray-300"></div>
-              <h1 className="text-4xl font-bold text-gray-800 flex items-center gap-3 font-lora">
-                <span className="text-3xl">🏆</span>
-                Sales Performance Dashboard
+        <div className="mb-6 sm:mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+              <div className="flex items-center gap-2 sm:gap-4">
+                <img 
+                  src="https://wpmktgatlas.wpengine.com/wp-content/uploads/2025/06/WP-Engine-15-year-anniversary.svg"
+                  alt="WP Engine"
+                  className="h-8 sm:h-12 w-auto"
+                  onError={(e) => {e.target.style.display = 'none'}}
+                />
+                <div className="hidden sm:block h-8 w-px bg-gray-300"></div>
+              </div>
+              <h1 className="text-xl sm:text-2xl lg:text-4xl font-bold text-gray-800 flex items-center gap-2 sm:gap-3 font-lora">
+                <span className="text-lg sm:text-2xl lg:text-3xl">🏆</span>
+                <span className="leading-tight">Sales Performance Dashboard</span>
               </h1>
             </div>
             <button
               onClick={() => setShowUploadModal(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium font-inter"
+              className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium font-inter text-sm sm:text-base w-full sm:w-auto"
             >
               <span>📤</span>
-              Upload Data
+              <span className="hidden xs:inline">Upload Data</span>
+              <span className="xs:hidden">Upload</span>
             </button>
           </div>
-          <p className="text-gray-700 font-inter">Track your sales performance and achieve excellence with WP Engine</p>
+          <p className="text-sm sm:text-base text-gray-700 font-inter">Track your sales performance and achieve excellence with WP Engine</p>
         </div>
 
         {/* Navigation */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-8 border border-gray-100">
-          <div className="flex items-center gap-4 flex-wrap">
+        <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 mb-6 sm:mb-8 border border-gray-100">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
             <button
               onClick={() => setSelectedView('leaderboard')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors font-inter ${
+              className={`px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors font-inter text-sm sm:text-base ${
                 selectedView === 'leaderboard' 
                   ? 'bg-blue-600 text-white' 
                   : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
               }`}
             >
-              Leaderboard
+              🏆 Leaderboard
             </button>
             <button
               onClick={() => setSelectedView('overview')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors font-inter ${
+              className={`px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors font-inter text-sm sm:text-base ${
                 selectedView === 'overview' 
                   ? 'bg-blue-600 text-white' 
                   : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
               }`}
             >
-              Performance Overview
+              📊 Performance Overview
             </button>
             <button
               onClick={() => setSelectedView('summit')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors font-inter ${
+              className={`px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors font-inter text-sm sm:text-base ${
                 selectedView === 'summit' 
                   ? 'bg-blue-600 text-white' 
                   : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
