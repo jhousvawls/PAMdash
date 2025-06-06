@@ -747,7 +747,12 @@ Alex Kim,https://example.com/photos/alex.jpg,95,133,125,127,127`;
                   : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
               }`}
             >
-              🏔️ Summit Challenge
+              <img 
+                src="https://media.tenor.com/8AqUPOC5GMgAAAAm/parrot-party.webp" 
+                alt="Party Parrot" 
+                className="w-4 h-4 sm:w-5 sm:h-5 inline mr-1 sm:mr-2"
+              />
+              Challenge
             </button>
           </div>
         </div>
