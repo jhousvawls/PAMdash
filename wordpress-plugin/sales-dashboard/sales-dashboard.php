@@ -97,6 +97,13 @@ class SalesDashboard {
             'callback' => array($this, 'update_settings'),
             'permission_callback' => array($this, 'check_admin_permission')
         ));
+        
+        // Get upload history
+        register_rest_route('sales/v1', '/history', array(
+            'methods' => 'GET',
+            'callback' => array($this, 'get_upload_history'),
+            'permission_callback' => '__return_true'
+        ));
     }
     
     public function get_sales_data($request) {
@@ -214,6 +221,41 @@ class SalesDashboard {
             'success' => true,
             'message' => 'Settings updated successfully',
             'weightings' => $weightings
+        ), 200);
+    }
+    
+    public function get_upload_history($request) {
+        $posts = get_posts(array(
+            'post_type' => 'sales_data',
+            'posts_per_page' => 20, // Get last 20 uploads
+            'orderby' => 'date',
+            'order' => 'DESC',
+            'post_status' => 'publish'
+        ));
+        
+        if (empty($posts)) {
+            return new WP_REST_Response(array(
+                'success' => true,
+                'data' => array(),
+                'message' => 'No upload history found'
+            ), 200);
+        }
+        
+        $history = array();
+        foreach ($posts as $post) {
+            $upload_count = get_post_meta($post->ID, 'upload_count', true);
+            $history[] = array(
+                'title' => $post->post_title,
+                'date' => date('M j, Y g:i A', strtotime($post->post_date)),
+                'recordCount' => $upload_count ? intval($upload_count) : 0,
+                'uploader' => get_the_author_meta('display_name', $post->post_author),
+                'status' => 'success'
+            );
+        }
+        
+        return new WP_REST_Response(array(
+            'success' => true,
+            'data' => $history
         ), 200);
     }
     
