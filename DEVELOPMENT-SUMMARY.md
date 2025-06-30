@@ -5,7 +5,26 @@ PAMdash is a React-based sales performance dashboard that displays sales team me
 
 ## Recent Major Changes & Enhancements
 
-### 1. WordPress Backend Integration (Fixed CSV Upload Issue)
+### 1. WordPress Plugin v1.1.0 - Enhanced Error Handling & CORS Support
+
+**Problem Solved**: CSV uploads failing due to WordPress API issues (404 errors, CORS problems, permalink conflicts)
+**Solution**: Enhanced WordPress plugin with better error handling, CORS support, and debugging capabilities
+
+#### Plugin Enhancements (v1.1.0):
+- **Version Update**: Bumped to 1.1.0 to reflect significant improvements
+- **CORS Headers**: Added proper cross-origin request support for React frontend
+- **Enhanced Error Handling**: Better error messages and logging for debugging
+- **Debug Endpoint**: Added `/wp-admin/admin-ajax.php?action=sales_dashboard_debug` for troubleshooting
+- **Improved REST API**: More robust endpoint registration and error responses
+- **Permalink Compatibility**: Better handling of different WordPress permalink structures
+
+#### Frontend Error Handling Improvements:
+- **Detailed Error Messages**: Specific error messages for 404, 403, 500, and connection issues
+- **Console Logging**: Enhanced debugging information in browser console
+- **User Feedback**: Clear notifications when WordPress saves fail vs succeed
+- **Fallback Strategy**: Graceful degradation to localStorage when WordPress unavailable
+
+### 2. WordPress Backend Integration (Previous Fix)
 
 **Problem Solved**: CSV uploads were only visible to the uploader's browser (localStorage only)
 **Solution**: Integrated WordPress REST API for shared data storage

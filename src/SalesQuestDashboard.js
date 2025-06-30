@@ -12,6 +12,7 @@ const SalesQuestDashboard = () => {
   
   // WordPress API configuration
   const WORDPRESS_API_BASE = 'https://hxequdx75zns6kkr6rht672iw.js.wpenginepowered.com/wp-json/sales/v1';
+  const WORDPRESS_AJAX_BASE = 'https://hxequdx75zns6kkr6rht672iw.js.wpenginepowered.com/wp-admin/admin-ajax.php';
 
   // Sample data with percentage-based metrics - memoized to prevent re-creation
   const sampleData = useMemo(() => [
@@ -155,20 +156,41 @@ const SalesQuestDashboard = () => {
 
   // Load upload history from WordPress
   const loadUploadHistory = useCallback(async () => {
+    // First try REST API
     try {
+      console.log('Attempting to load upload history from REST API:', `${WORDPRESS_API_BASE}/history`);
       const response = await fetch(`${WORDPRESS_API_BASE}/history`);
       const result = await response.json();
       if (result.success && result.data) {
         setUploadHistory(result.data);
+        return;
       }
-    } catch (error) {
-      console.error('Error loading upload history:', error);
+    } catch (restError) {
+      console.error('REST API failed for upload history, trying AJAX fallback:', restError);
+      
+      // Fallback to AJAX if REST API fails
+      try {
+        console.log('Attempting AJAX fallback for upload history:', `${WORDPRESS_AJAX_BASE}?action=sales_dashboard_history`);
+        const ajaxResponse = await fetch(`${WORDPRESS_AJAX_BASE}?action=sales_dashboard_history`);
+        const ajaxResult = await ajaxResponse.json();
+        
+        if (ajaxResult.success && ajaxResult.data.success && ajaxResult.data.data) {
+          setUploadHistory(ajaxResult.data.data);
+          return;
+        }
+      } catch (ajaxError) {
+        console.error('Both REST API and AJAX failed for upload history:', ajaxError);
+      }
     }
-  }, [WORDPRESS_API_BASE]);
+    
+    // If both methods fail, set empty history
+    setUploadHistory([]);
+  }, [WORDPRESS_API_BASE, WORDPRESS_AJAX_BASE]);
 
   const loadDataFromWordPress = useCallback(async () => {
-    // Always try WordPress first for shared data
+    // First try REST API
     try {
+      console.log('Attempting to load from WordPress REST API:', `${WORDPRESS_API_BASE}/data`);
       const response = await fetch(`${WORDPRESS_API_BASE}/data`);
       const result = await response.json();
       if (result.success && result.data.length > 0) {
@@ -182,8 +204,29 @@ const SalesQuestDashboard = () => {
         localStorage.setItem('salesDashboardData', JSON.stringify(processedData));
         return;
       }
-    } catch (error) {
-      console.error('Error loading data from WordPress:', error);
+    } catch (restError) {
+      console.error('REST API failed for data loading, trying AJAX fallback:', restError);
+      
+      // Fallback to AJAX if REST API fails
+      try {
+        console.log('Attempting AJAX fallback for data loading:', `${WORDPRESS_AJAX_BASE}?action=sales_dashboard_data`);
+        const ajaxResponse = await fetch(`${WORDPRESS_AJAX_BASE}?action=sales_dashboard_data`);
+        const ajaxResult = await ajaxResponse.json();
+        
+        if (ajaxResult.success && ajaxResult.data.success && ajaxResult.data.data.length > 0) {
+          // Use WordPress AJAX data
+          const processedData = ajaxResult.data.data.map(person => ({
+            ...person,
+            ...calculateQuestMetrics(person)
+          }));
+          setSalesData(processedData);
+          // Update localStorage with the latest WordPress data
+          localStorage.setItem('salesDashboardData', JSON.stringify(processedData));
+          return;
+        }
+      } catch (ajaxError) {
+        console.error('Both REST API and AJAX failed for data loading:', ajaxError);
+      }
     }
 
     // If WordPress fails, check for locally stored data as fallback
@@ -211,7 +254,7 @@ const SalesQuestDashboard = () => {
       ...calculateQuestMetrics(person)
     }));
     setSalesData(processedData);
-  }, [WORDPRESS_API_BASE, sampleData, calculateQuestMetrics]);
+  }, [WORDPRESS_API_BASE, WORDPRESS_AJAX_BASE, sampleData, calculateQuestMetrics]);
 
   useEffect(() => {
     // Load data from WordPress on component mount
@@ -236,7 +279,10 @@ const SalesQuestDashboard = () => {
   }, [salesData]);
 
   const saveToWordPress = async (salesData) => {
+    // First try REST API
     try {
+      console.log('Attempting to save to WordPress REST API:', `${WORDPRESS_API_BASE}/upload`);
+      
       const response = await fetch(`${WORDPRESS_API_BASE}/upload`, {
         method: 'POST',
         headers: {
@@ -247,7 +293,16 @@ const SalesQuestDashboard = () => {
           title: `Sales Data - ${new Date().toLocaleDateString()}`
         })
       });
+      
+      console.log('WordPress API Response Status:', response.status);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
       const result = await response.json();
+      console.log('WordPress API Response Data:', result);
+      
       if (result.success) {
         setUploadMessage(`✅ Successfully saved ${result.count} sales warriors to WordPress! Data is now live for all users.`);
         displayNotification(`Successfully uploaded ${result.count} sales records! Data is now live for all users.`);
@@ -256,12 +311,70 @@ const SalesQuestDashboard = () => {
           loadDataFromWordPress();
           loadUploadHistory();
         }, 1000);
+        return; // Success, exit function
       } else {
-        setUploadMessage('❌ Error saving to WordPress: ' + result.message + ' (Data still visible locally)');
+        throw new Error(result.message || 'REST API returned error');
       }
-    } catch (error) {
-      setUploadMessage('❌ Error connecting to WordPress: ' + error.message + ' (Data still visible locally)');
-      console.error('WordPress save error:', error);
+    } catch (restError) {
+      console.error('REST API failed, trying AJAX fallback:', restError);
+      
+      // Fallback to AJAX if REST API fails
+      try {
+        console.log('Attempting AJAX fallback:', `${WORDPRESS_AJAX_BASE}?action=sales_dashboard_upload`);
+        
+        const ajaxResponse = await fetch(`${WORDPRESS_AJAX_BASE}?action=sales_dashboard_upload`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            salesData: salesData,
+            title: `Sales Data - ${new Date().toLocaleDateString()}`
+          })
+        });
+        
+        console.log('AJAX Response Status:', ajaxResponse.status);
+        
+        if (!ajaxResponse.ok) {
+          throw new Error(`AJAX HTTP ${ajaxResponse.status}: ${ajaxResponse.statusText}`);
+        }
+        
+        const ajaxResult = await ajaxResponse.json();
+        console.log('AJAX Response Data:', ajaxResult);
+        
+        if (ajaxResult.success) {
+          setUploadMessage(`✅ Successfully saved ${ajaxResult.data.count} sales warriors to WordPress! Data is now live for all users.`);
+          displayNotification(`Successfully uploaded ${ajaxResult.data.count} sales records! Data is now live for all users.`);
+          // Refresh data and upload history
+          setTimeout(() => {
+            loadDataFromWordPress();
+            loadUploadHistory();
+          }, 1000);
+          return; // Success, exit function
+        } else {
+          throw new Error(ajaxResult.data?.message || 'AJAX returned error');
+        }
+      } catch (ajaxError) {
+        console.error('Both REST API and AJAX failed:', ajaxError);
+        
+        // Both methods failed, show comprehensive error
+        let errorMessage = 'Both REST API and AJAX methods failed';
+        
+        if (restError.message.includes('404') || ajaxError.message.includes('404')) {
+          errorMessage = 'WordPress endpoints not found (404). Check plugin activation and permalinks.';
+        } else if (restError.message.includes('403') || ajaxError.message.includes('403')) {
+          errorMessage = 'WordPress access denied (403). Check permissions.';
+        } else if (restError.message.includes('500') || ajaxError.message.includes('500')) {
+          errorMessage = 'WordPress server error (500). Check plugin configuration.';
+        } else if (restError.name === 'TypeError' || ajaxError.name === 'TypeError') {
+          errorMessage = 'Cannot connect to WordPress. Check URL and CORS settings.';
+        } else {
+          errorMessage = `REST: ${restError.message}, AJAX: ${ajaxError.message}`;
+        }
+        
+        setUploadMessage(`❌ WordPress Connection Error: ${errorMessage} (Data saved locally only)`);
+        displayNotification(`Upload failed: ${errorMessage}. Data visible locally only.`, 'error');
+      }
     }
   };
 
