@@ -153,6 +153,19 @@ const SalesQuestDashboard = () => {
     };
   }, []);
 
+  // Load upload history from WordPress
+  const loadUploadHistory = useCallback(async () => {
+    try {
+      const response = await fetch(`${WORDPRESS_API_BASE}/history`);
+      const result = await response.json();
+      if (result.success && result.data) {
+        setUploadHistory(result.data);
+      }
+    } catch (error) {
+      console.error('Error loading upload history:', error);
+    }
+  }, [WORDPRESS_API_BASE]);
+
   const loadDataFromWordPress = useCallback(async () => {
     // Always try WordPress first for shared data
     try {
@@ -205,19 +218,6 @@ const SalesQuestDashboard = () => {
     loadDataFromWordPress();
     loadUploadHistory();
   }, [loadDataFromWordPress, loadUploadHistory]);
-
-  // Load upload history from WordPress
-  const loadUploadHistory = useCallback(async () => {
-    try {
-      const response = await fetch(`${WORDPRESS_API_BASE}/history`);
-      const result = await response.json();
-      if (result.success && result.data) {
-        setUploadHistory(result.data);
-      }
-    } catch (error) {
-      console.error('Error loading upload history:', error);
-    }
-  }, [WORDPRESS_API_BASE]);
 
   // Show notification
   const displayNotification = useCallback((message, type = 'success') => {
