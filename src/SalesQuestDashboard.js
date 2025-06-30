@@ -7,7 +7,7 @@ const SalesQuestDashboard = () => {
   const [showUploadModal, setShowUploadModal] = useState(false);
   
   // WordPress API configuration
-  const WORDPRESS_API_BASE = 'https://pamdash.wpenginepowered.com/wp-json/sales/v1';
+  const WORDPRESS_API_BASE = 'https://hxequdx75zns6kkr6rht672iw.js.wpenginepowered.com/wp-json/sales/v1';
 
   // Sample data with percentage-based metrics - memoized to prevent re-creation
   const sampleData = useMemo(() => [
@@ -150,26 +150,7 @@ const SalesQuestDashboard = () => {
   }, []);
 
   const loadDataFromWordPress = useCallback(async () => {
-    // First, check for locally stored data
-    const localData = localStorage.getItem('salesDashboardData');
-    if (localData) {
-      try {
-        const parsedLocalData = JSON.parse(localData);
-        // Check if the data has the new percentage format
-        if (parsedLocalData.length > 0 && parsedLocalData[0].closedWonPercent !== undefined) {
-          setSalesData(parsedLocalData);
-          return; // Use local data and exit early
-        } else {
-          // Clear old format data
-          localStorage.removeItem('salesDashboardData');
-        }
-      } catch (error) {
-        console.error('Error parsing local data:', error);
-        localStorage.removeItem('salesDashboardData'); // Clear corrupted data
-      }
-    }
-
-    // If no local data, try WordPress
+    // Always try WordPress first for shared data
     try {
       const response = await fetch(`${WORDPRESS_API_BASE}/data`);
       const result = await response.json();
@@ -180,23 +161,39 @@ const SalesQuestDashboard = () => {
           ...calculateQuestMetrics(person)
         }));
         setSalesData(processedData);
-      } else {
-        // Use sample data if no WordPress data exists
-        const processedData = sampleData.map(person => ({
-          ...person,
-          ...calculateQuestMetrics(person)
-        }));
-        setSalesData(processedData);
+        // Update localStorage with the latest WordPress data
+        localStorage.setItem('salesDashboardData', JSON.stringify(processedData));
+        return;
       }
     } catch (error) {
       console.error('Error loading data from WordPress:', error);
-      // Fallback to sample data
-      const processedData = sampleData.map(person => ({
-        ...person,
-        ...calculateQuestMetrics(person)
-      }));
-      setSalesData(processedData);
     }
+
+    // If WordPress fails, check for locally stored data as fallback
+    const localData = localStorage.getItem('salesDashboardData');
+    if (localData) {
+      try {
+        const parsedLocalData = JSON.parse(localData);
+        // Check if the data has the new percentage format
+        if (parsedLocalData.length > 0 && parsedLocalData[0].closedWonPercent !== undefined) {
+          setSalesData(parsedLocalData);
+          return;
+        } else {
+          // Clear old format data
+          localStorage.removeItem('salesDashboardData');
+        }
+      } catch (error) {
+        console.error('Error parsing local data:', error);
+        localStorage.removeItem('salesDashboardData'); // Clear corrupted data
+      }
+    }
+
+    // Final fallback to sample data
+    const processedData = sampleData.map(person => ({
+      ...person,
+      ...calculateQuestMetrics(person)
+    }));
+    setSalesData(processedData);
   }, [WORDPRESS_API_BASE, sampleData, calculateQuestMetrics]);
 
   useEffect(() => {
@@ -225,8 +222,11 @@ const SalesQuestDashboard = () => {
       });
       const result = await response.json();
       if (result.success) {
-        setUploadMessage(`✅ Successfully saved ${result.count} sales warriors to WordPress!`);
-        // Don't reload from WordPress - keep the current data visible
+        setUploadMessage(`✅ Successfully saved ${result.count} sales warriors to WordPress! Data is now live for all users.`);
+        // Refresh data from WordPress to ensure all users see the same data
+        setTimeout(() => {
+          loadDataFromWordPress();
+        }, 1000);
       } else {
         setUploadMessage('❌ Error saving to WordPress: ' + result.message + ' (Data still visible locally)');
       }
