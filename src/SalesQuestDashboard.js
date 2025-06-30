@@ -11,8 +11,8 @@ const SalesQuestDashboard = () => {
   const [notificationMessage, setNotificationMessage] = useState('');
   
   // WordPress API configuration
-  const WORDPRESS_API_BASE = 'https://hxequdx75zns6kkr6rht672iw.js.wpenginepowered.com/wp-json/sales/v1';
-  const WORDPRESS_AJAX_BASE = 'https://hxequdx75zns6kkr6rht672iw.js.wpenginepowered.com/wp-admin/admin-ajax.php';
+  const WORDPRESS_API_BASE = 'https://pamdash.wpenginepowered.com/index.php?rest_route=/sales/v1';
+  const WORDPRESS_AJAX_BASE = 'https://pamdash.wpenginepowered.com/wp-admin/admin-ajax.php';
 
   // Sample data with percentage-based metrics - memoized to prevent re-creation
   const sampleData = useMemo(() => [

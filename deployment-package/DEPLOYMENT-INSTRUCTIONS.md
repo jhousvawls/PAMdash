@@ -13,6 +13,8 @@ This deployment package contains the complete solution to fix the CSV upload per
    - Version 1.2.0 by John Housholder
 
 2. **Updated React Dashboard**: Built production files
+   - **FIXED**: Corrected WordPress API URLs to use proper domain (pamdash.wpenginepowered.com)
+   - **FIXED**: Updated REST API URLs to work with Plain permalink structure
    - AJAX fallback for data loading
    - AJAX fallback for upload history
    - Enhanced error logging and debugging
@@ -33,7 +35,7 @@ This deployment package contains the complete solution to fix the CSV upload per
 2. Replace the existing dashboard files on your server
 3. The main files to upload are:
    - `index.html`
-   - `static/js/main.eb7f0e1d.js`
+   - `static/js/main.2988df04.js`
    - `static/css/main.668a55fe.css`
    - Any other static assets
 
