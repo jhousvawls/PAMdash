@@ -204,7 +204,7 @@ const SalesQuestDashboard = () => {
     // Load data from WordPress on component mount
     loadDataFromWordPress();
     loadUploadHistory();
-  }, [loadDataFromWordPress]);
+  }, [loadDataFromWordPress, loadUploadHistory]);
 
   // Load upload history from WordPress
   const loadUploadHistory = useCallback(async () => {
