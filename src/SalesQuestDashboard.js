@@ -5,6 +5,10 @@ const SalesQuestDashboard = () => {
   const [uploadMessage, setUploadMessage] = useState('');
   const [selectedView, setSelectedView] = useState('leaderboard');
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showUploadHistory, setShowUploadHistory] = useState(false);
+  const [uploadHistory, setUploadHistory] = useState([]);
+  const [showNotification, setShowNotification] = useState(false);
+  const [notificationMessage, setNotificationMessage] = useState('');
   
   // WordPress API configuration
   const WORDPRESS_API_BASE = 'https://hxequdx75zns6kkr6rht672iw.js.wpenginepowered.com/wp-json/sales/v1';
@@ -199,7 +203,30 @@ const SalesQuestDashboard = () => {
   useEffect(() => {
     // Load data from WordPress on component mount
     loadDataFromWordPress();
+    loadUploadHistory();
   }, [loadDataFromWordPress]);
+
+  // Load upload history from WordPress
+  const loadUploadHistory = useCallback(async () => {
+    try {
+      const response = await fetch(`${WORDPRESS_API_BASE}/history`);
+      const result = await response.json();
+      if (result.success && result.data) {
+        setUploadHistory(result.data);
+      }
+    } catch (error) {
+      console.error('Error loading upload history:', error);
+    }
+  }, [WORDPRESS_API_BASE]);
+
+  // Show notification
+  const displayNotification = useCallback((message, type = 'success') => {
+    setNotificationMessage(message);
+    setShowNotification(true);
+    setTimeout(() => {
+      setShowNotification(false);
+    }, 5000);
+  }, []);
 
   // Save data to localStorage whenever salesData changes
   useEffect(() => {
@@ -223,9 +250,11 @@ const SalesQuestDashboard = () => {
       const result = await response.json();
       if (result.success) {
         setUploadMessage(`✅ Successfully saved ${result.count} sales warriors to WordPress! Data is now live for all users.`);
-        // Refresh data from WordPress to ensure all users see the same data
+        displayNotification(`Successfully uploaded ${result.count} sales records! Data is now live for all users.`);
+        // Refresh data and upload history
         setTimeout(() => {
           loadDataFromWordPress();
+          loadUploadHistory();
         }, 1000);
       } else {
         setUploadMessage('❌ Error saving to WordPress: ' + result.message + ' (Data still visible locally)');
@@ -704,14 +733,23 @@ Alex Kim,https://example.com/photos/alex.jpg,95,133,125,127,127`;
                 <span className="leading-tight">Sales Performance Dashboard</span>
               </h1>
             </div>
-            <button
-              onClick={() => setShowUploadModal(true)}
-              className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium font-inter text-sm sm:text-base w-full sm:w-auto"
-            >
-              <span>📤</span>
-              <span className="hidden xs:inline">Upload Data</span>
-              <span className="xs:hidden">Upload</span>
-            </button>
+            <div className="flex gap-2 w-full sm:w-auto">
+              <button
+                onClick={() => setShowUploadHistory(true)}
+                className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors font-medium font-inter text-sm sm:text-base flex-1 sm:flex-none"
+              >
+                <span>📋</span>
+                <span className="hidden xs:inline">History</span>
+              </button>
+              <button
+                onClick={() => setShowUploadModal(true)}
+                className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium font-inter text-sm sm:text-base flex-1 sm:flex-none"
+              >
+                <span>📤</span>
+                <span className="hidden xs:inline">Upload Data</span>
+                <span className="xs:hidden">Upload</span>
+              </button>
+            </div>
           </div>
           <p className="text-sm sm:text-base text-gray-700 font-inter">Track your sales performance and achieve excellence with WP Engine</p>
         </div>
@@ -775,6 +813,84 @@ Alex Kim,https://example.com/photos/alex.jpg,95,133,125,127,127`;
         )}
 
         {selectedView === 'summit' && renderSummitChallenge()}
+
+        {/* Success Notification */}
+        {showNotification && (
+          <div className="fixed top-4 right-4 z-50 animate-slide-in">
+            <div className="bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg flex items-center gap-3 max-w-md">
+              <span className="text-2xl">🎉</span>
+              <div>
+                <p className="font-semibold">Upload Successful!</p>
+                <p className="text-sm opacity-90">{notificationMessage}</p>
+              </div>
+              <button
+                onClick={() => setShowNotification(false)}
+                className="text-white hover:text-gray-200 transition-colors ml-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Upload History Modal */}
+        {showUploadHistory && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl shadow-2xl p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
+                  <span>📋</span>
+                  Upload History
+                </h2>
+                <button
+                  onClick={() => setShowUploadHistory(false)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              <div className="overflow-y-auto max-h-96">
+                {uploadHistory.length > 0 ? (
+                  <div className="space-y-3">
+                    {uploadHistory.map((upload, index) => (
+                      <div key={index} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="font-semibold text-gray-800">{upload.title}</h3>
+                          <span className="text-sm text-gray-500">{upload.date}</span>
+                        </div>
+                        <div className="flex items-center gap-4 text-sm text-gray-600">
+                          <span>📊 {upload.recordCount} records</span>
+                          <span>👤 {upload.uploader || 'Unknown'}</span>
+                          <span className="text-green-600">✅ Success</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <span className="text-4xl block mb-3">📋</span>
+                    <p>No upload history available</p>
+                    <p className="text-sm mt-2">Upload your first CSV file to see history here</p>
+                  </div>
+                )}
+              </div>
+              
+              <div className="mt-6 flex justify-end">
+                <button
+                  onClick={() => setShowUploadHistory(false)}
+                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-sm font-medium"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Upload Modal */}
         {showUploadModal && (
